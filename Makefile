@@ -9,7 +9,7 @@
 #
 # User-defined variables
 #
-BASEDIR?=${CURDIR}/../tmp/mfs
+BASEDIR?=${CURDIR}/mfsbsd/tmp/mfs
 CFGDIR?=${CURDIR}/conf
 MFSROOT_FREE_INODES?=5000
 MFSROOT_FREE_BLOCKS?=10%
@@ -51,7 +51,7 @@ BSDLABEL=bsdlabel
 CURDIR!=${PWD}
 WRKDIR?=${CURDIR}/tmp
 FILESDIR=${CURDIR}/files
-TOOLSDIR=${CURDIR}/../tools
+TOOLSDIR=${CURDIR}/mfsbsd/tools
 #
 #
 DOFS=${TOOLSDIR}/doFS.sh
@@ -102,6 +102,21 @@ ${_ROOTDIR}:
 
 ${_BOOTDIR}:
 	${_v}${MKDIR} ${_BOOTDIR}/kernel ${_BOOTDIR}/modules && ${CHOWN} -R root:wheel ${_BOOTDIR}
+
+bootstrap: ${CURDIR}/mfsbsd/Makefile
+	${_v}echo -n "Initializing mfsbsd ..."
+	${_v}${MKDIR} ${WRKDIR}/base
+	${_v}git submodule init && git submodule update
+	${_v}echo " done"
+	${_v}echo -n "Downloading base & kernel packages ..."
+	${_v}if [ ! -f "${WRKDIR}/base/base.txz" ]; then \
+	  ${_v}fetch -o ${WRKDIR}/base/base.txz http://ftp.freebsd.cz/pub/FreeBSD/releases/amd64/11.1-RELEASE/base.txz; \
+	fi
+	${_v}if [ ! -f "${WRKDIR}/base/kernel.txz" ]; then \
+	  ${_v}fetch -o ${WRKDIR}/base/kernel.txz http://ftp.freebsd.cz/pub/FreeBSD/releases/amd64/11.1-RELEASE/kernel.txz; \
+	fi
+	${_v}echo " done"
+	${_v}cd mfsbsd; make extract BASE=${WRKDIR}/base
 
 hierarchy: destdir ${WRKDIR}/.hierarchy_done
 ${WRKDIR}/.hierarchy_done:
@@ -158,7 +173,7 @@ ${WRKDIR}/.localtar_done:
 	${_v}echo " done"
 .endif
 	
-install: installbase basetar localtar
+install: bootstrap installbase basetar localtar
 
 config: install ${WRKDIR}/.config_done
 ${WRKDIR}/.config_done:
