@@ -1,0 +1,34 @@
+#!/bin/sh
+HOME=/
+PATH=/sbin:/bin/:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+export HOME PATH
+
+# REMOUT ROOT
+mount -uw /
+
+# EXTRACT BOOT
+tar -x -J -C / -f /.mfs_boot.txz
+
+# MOUNT TMPFS FILESYSTEMS
+mount -t tmpfs tmpfs /tmp
+mount -t tmpfs tmpfs /var
+mount -t tmpfs tmpfs /usr/local
+
+# EXTRACT BASE and LOCAL
+tar -x -J -C / -f /.mfs_base.txz
+[ -f /.mfs_local.txz ] && tar -x -J -C /usr/local -f /.mfs_local.txz
+
+# VAR
+mtree -deU -f /etc/mtree/BSD.var.dist -p /var > /dev/null
+touch /var/log/utx.lastlogin /var/log/utx.log
+cap_mkdb -f /tmp/termcap /etc/termcap.small
+
+# (NO) NETWORKING
+hostname krypta-livecd
+
+# SERVERS
+newsyslog -C
+syslogd -s
+
+# LOCAL
+[ -f /etc/rc.local ] && . /etc/rc.local

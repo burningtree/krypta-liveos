@@ -1,0 +1,3 @@
+#!/bin/sh
+ln -s /usr/local/bin/dbclient /usr/bin/dbclient
+ln -s /usr/local/bin/dbclient /usr/local/bin/ssh
